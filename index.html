@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bingo TV</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-default">
+  <!-- Canvas para efecto confetti -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Contenedor principal -->
+  <div id="app">
+    <!-- Header: bola y número actual -->
+    <div class="logo-wrapper">
+      <img src="logo.png" alt="ShareDance" class="logo">
+    </div>
+
+    <header class="main-header">
+      <div class="ball-container">
+        <div id="current-ball" class="bingo-ball">
+          <span id="ball-letter" class="ball-letter">B</span>
+          <span id="ball-number" class="ball-number">--</span>
+        </div>
+      </div>
+      <div class="number-display">
+        <span id="display-letter" class="display-letter">B</span>
+        <span id="display-number" class="display-number">--</span>
+      </div>
+    </header>
+
+    <!-- Main: historial de bolas sorteadas -->
+    <main class="history-section">
+      <h2 class="history-title">Últimas bolas</h2>
+      <div id="history-grid" class="history-grid">
+        <!-- Se llena dinámicamente -->
+      </div>
+    </main>
+
+    <!-- Footer: controles -->
+    <footer class="controls-section">
+      <div class="counter-box">
+        <span class="counter-label">Bolas restantes</span>
+        <span id="balls-remaining" class="counter-value">75</span>
+      </div>
+      <button id="btn-draw" class="btn-draw" type="button">Sacar Bola</button>
+      <div class="side-controls">
+        <div class="theme-selector" title="Cambiar tema">
+          <button class="theme-btn theme-default" data-theme="theme-default" type="button"></button>
+          <button class="theme-btn theme-gold" data-theme="theme-gold" type="button"></button>
+          <button class="theme-btn theme-neon" data-theme="theme-neon" type="button"></button>
+        </div>
+        <button id="btn-new-game" class="btn-new-game" type="button">Nueva Partida</button>
+      </div>
+    </footer>
+
+    <!-- Indicador de estado -->
+    <div id="status-message" class="status-message"></div>
+  </div>
+
+  <!-- Modal de confirmación -->
+  <div id="modal-confirm" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h3>¿Nueva partida?</h3>
+      <p>Se borrará todo el progreso actual. Esta acción no se puede deshacer.</p>
+      <div class="modal-actions">
+        <button id="btn-cancel" class="btn-cancel" type="button">Cancelar</button>
+        <button id="btn-confirm" class="btn-confirm" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
