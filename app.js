@@ -411,6 +411,7 @@ class UIRenderer {
       numberDisplay: document.querySelector('.number-display'),
       drum: document.getElementById('drum'),
       historyGrid: document.getElementById('history-grid'),
+      historyTitle: document.getElementById('history-title'),
       remaining: document.getElementById('balls-remaining'),
       btnDraw: document.getElementById('btn-draw'),
       btnUndo: document.getElementById('btn-undo'),
@@ -441,7 +442,11 @@ class UIRenderer {
   }
 
   renderHistory() {
-    const history = this.game.getHistory(24);
+    const history = this.game.getHistory(10);
+    // Mostrar u ocultar título según haya bolas
+    if (this.els.historyTitle) {
+      this.els.historyTitle.classList.toggle('hidden', history.length === 0);
+    }
     this.els.historyGrid.innerHTML = '';
     history.forEach(num => {
       const div = document.createElement('div');

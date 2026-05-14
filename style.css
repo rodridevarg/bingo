@@ -651,6 +651,10 @@ body {
   .controls-section { padding-bottom: 1.5vh; }
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* Mobile: arreglar botón sacar bola */
 @media (max-width: 480px) {
   .controls-section {
