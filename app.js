@@ -143,6 +143,16 @@ class AudioEngine {
     this._osc(800, 'square', 0.05, t, 0.08);
   }
 
+  playRiverito() {
+    try {
+      const audio = new Audio('riverito.mp3');
+      audio.volume = 0.8;
+      audio.play();
+    } catch (e) {
+      console.warn('No se pudo reproducir riverito.mp3:', e);
+    }
+  }
+
   _noise(duration, startTime, gainVal) {
     if (!this.ctx) return;
     const bufferSize = this.ctx.sampleRate * duration;
@@ -691,7 +701,7 @@ class App {
     this.game.reset(true);
     this.ui.renderAll();
     this.ui.showStatus('Nueva partida iniciada');
-    this.audio.playFanfare();
+    this.audio.playRiverito();
   }
 
   _applyTheme(themeName) {
