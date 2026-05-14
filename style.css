@@ -607,3 +607,40 @@ body {
   .history-section { margin-bottom: 1vh; }
   .controls-section { padding-bottom: 1.5vh; }
 }
+
+/* Mobile: arreglar botón sacar bola */
+@media (max-width: 480px) {
+  .controls-section {
+    gap: 2vw;
+    flex-wrap: wrap;
+  }
+  .counter-box {
+    min-width: auto;
+    flex: 1 1 40%;
+  }
+  .counter-label {
+    font-size: 1.6vh;
+  }
+  .counter-value {
+    font-size: 4vh;
+  }
+  .btn-draw {
+    font-size: 2.8vh;
+    padding: 1.8vh 4vw;
+    flex: 1 1 50%;
+    white-space: nowrap;
+  }
+  .side-controls {
+    flex-direction: row;
+    gap: 2vw;
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-undo,
+  .btn-new-game {
+    font-size: 1.6vh;
+    padding: 1.2vh 3vw;
+    flex: 1;
+    max-width: 140px;
+  }
+}
