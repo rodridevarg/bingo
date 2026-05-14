@@ -417,7 +417,7 @@ class UIRenderer {
       displayLetter: document.getElementById('display-letter'),
       displayNumber: document.getElementById('display-number'),
       numberDisplay: document.querySelector('.number-display'),
-      bingoBoard: document.getElementById('bingo-board'),
+      historyGrid: document.getElementById('history-grid'),
       remaining: document.getElementById('balls-remaining'),
       btnDraw: document.getElementById('btn-draw'),
       btnUndo: document.getElementById('btn-undo'),
@@ -427,33 +427,11 @@ class UIRenderer {
       btnConfirm: document.getElementById('btn-confirm'),
       status: document.getElementById('status-message')
     };
-    this._buildBoard();
-  }
-
-  _buildBoard() {
-    const letters = ['B', 'I', 'N', 'G', 'O'];
-    const board = this.els.bingoBoard;
-    board.innerHTML = '';
-    // Headers
-    letters.forEach(letter => {
-      const header = document.createElement('div');
-      header.className = 'board-header';
-      header.textContent = letter;
-      board.appendChild(header);
-    });
-    // Celdas 1-75
-    for (let num = 1; num <= 75; num++) {
-      const cell = document.createElement('div');
-      cell.className = 'board-cell';
-      cell.dataset.number = num;
-      cell.textContent = num;
-      board.appendChild(cell);
-    }
   }
 
   renderAll() {
     this.renderCurrentBall();
-    this.renderBoard();
+    this.renderHistory();
     this.renderCounter();
     this.renderButtonState();
   }
@@ -474,17 +452,15 @@ class UIRenderer {
     this.els.displayNumber.textContent = n;
   }
 
-  renderBoard() {
-    const cells = this.els.bingoBoard.querySelectorAll('.board-cell');
-    cells.forEach(cell => {
-      const num = parseInt(cell.dataset.number, 10);
-      cell.classList.remove('drawn', 'current');
-      if (this.game.drawnNumbers.includes(num)) {
-        cell.classList.add('drawn');
-        if (num === this.game.currentNumber) {
-          cell.classList.add('current');
-        }
-      }
+  renderHistory() {
+    const history = this.game.getHistory(24);
+    this.els.historyGrid.innerHTML = '';
+    history.forEach(num => {
+      const letter = this.game.getLetter(num);
+      const div = document.createElement('div');
+      div.className = 'history-ball';
+      div.innerHTML = `<span class="hb-letter">${letter}</span><span class="hb-number">${num}</span>`;
+      this.els.historyGrid.appendChild(div);
     });
   }
 
@@ -545,8 +521,8 @@ class UIRenderer {
       this.els.ball.classList.add('animate-glow');
     }, 1200);
 
-    // Actualizar tablero y contador
-    this.renderBoard();
+    // Actualizar historial y contador
+    this.renderHistory();
     this.renderCounter();
     this.renderButtonState();
 
