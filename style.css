@@ -241,6 +241,9 @@ body {
   border-radius: 16px;
   backdrop-filter: blur(10px);
   min-height: 10vh;
+  max-height: 22vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .history-ball {
