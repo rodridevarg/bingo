@@ -1,6 +1,7 @@
 /**
  * BINGO TV - Aplicación completa offline
- * Lógica, persistencia, audio, voz y efectos visuales
+ * Bingo Tradicional Argentino: 90 bolas, sin letras
+ * Lógica, persistencia, audio, voz, bolillero y efectos visuales
  */
 
 /* ============================================
@@ -8,7 +9,7 @@
    ============================================ */
 class StorageManager {
   static KEY = 'bingoState';
-  static VERSION = '1.0';
+  static VERSION = '2.0';
 
   static save(state) {
     try {
@@ -29,7 +30,8 @@ class StorageManager {
       if (!raw) return null;
       const data = JSON.parse(raw);
       if (data.version !== this.VERSION) {
-        // Migración futura aquí si es necesario
+        // Versión incompatible: forzar nueva partida
+        return null;
       }
       return data;
     } catch (e) {
@@ -98,10 +100,8 @@ class AudioEngine {
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    // Sonido pop con dos tonos
     this._osc(600, 'sine', 0.15, t, 0.2);
     this._osc(900, 'sine', 0.1, t + 0.02, 0.15);
-    // Pequeño ruido blanco para textura
     this._noise(0.08, t, 0.08);
   }
 
@@ -109,7 +109,6 @@ class AudioEngine {
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    // Subida de tono tipo ruleta
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'sine';
@@ -129,7 +128,7 @@ class AudioEngine {
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    const notes = [523, 659, 784, 1047];
     notes.forEach((freq, i) => {
       this._osc(freq, 'sine', 0.4, t + i * 0.12, 0.18);
       this._osc(freq * 2, 'triangle', 0.3, t + i * 0.12, 0.06);
@@ -185,7 +184,6 @@ class VoiceAnnouncer {
   _loadVoice() {
     const pick = () => {
       const voices = window.speechSynthesis.getVoices();
-      // Preferir voces en español
       const spanish = voices.filter(v => v.lang.startsWith('es'));
       this.voice = spanish[0] || voices[0] || null;
     };
@@ -197,7 +195,6 @@ class VoiceAnnouncer {
 
   speak(text) {
     if (!this.enabled || !window.speechSynthesis) return;
-    // Cancelar anterior
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.voice = this.voice;
@@ -208,23 +205,21 @@ class VoiceAnnouncer {
     window.speechSynthesis.speak(utter);
   }
 
-  announce(number, letter) {
+  announce(number) {
     const words = this._numberToWords(number);
-    const text = `${letter}, ${words}`;
-    this.speak(text);
+    this.speak(words);
   }
 
   _numberToWords(n) {
-    // Conversión básica español para números 1-75
     const unidades = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
     const especiales = ['diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve'];
-    const decenas = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta'];
+    const decenas = ['', '', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
     const veinti = ['', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
 
     if (n >= 1 && n <= 9) return unidades[n];
     if (n >= 10 && n <= 19) return especiales[n - 10];
     if (n >= 20 && n <= 29) return veinti[n - 20] || decenas[2];
-    if (n >= 30 && n <= 75) {
+    if (n >= 30 && n <= 90) {
       const d = Math.floor(n / 10);
       const u = n % 10;
       let res = decenas[d];
@@ -284,7 +279,7 @@ class ConfettiEffect {
       const p = this.particles[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.05; // gravedad
+      p.vy += 0.05;
       p.rotation += p.rotationSpeed;
       p.opacity -= 0.003;
 
@@ -306,7 +301,7 @@ class ConfettiEffect {
 }
 
 /* ============================================
-   5. BINGO GAME LOGIC
+   5. BINGO GAME LOGIC (90 bolas, tradicional argentino)
    ============================================ */
 class BingoGame {
   constructor() {
@@ -328,8 +323,7 @@ class BingoGame {
       this.remainingNumbers = saved.remainingNumbers || [];
       this.currentNumber = saved.currentNumber !== undefined ? saved.currentNumber : null;
       this.settings = { ...this.settings, ...(saved.settings || {}) };
-      // Reconstruir remaining si está vacío pero no se han sacado 75
-      if (this.remainingNumbers.length === 0 && this.drawnNumbers.length < 75) {
+      if (this.remainingNumbers.length === 0 && this.drawnNumbers.length < 90) {
         this._rebuildRemaining();
       }
     } else {
@@ -338,13 +332,13 @@ class BingoGame {
   }
 
   _rebuildRemaining() {
-    const all = Array.from({ length: 75 }, (_, i) => i + 1);
+    const all = Array.from({ length: 90 }, (_, i) => i + 1);
     this.remainingNumbers = all.filter(n => !this.drawnNumbers.includes(n));
   }
 
   reset(save = true) {
     this.drawnNumbers = [];
-    this.remainingNumbers = Array.from({ length: 75 }, (_, i) => i + 1);
+    this.remainingNumbers = Array.from({ length: 90 }, (_, i) => i + 1);
     this.currentNumber = null;
     this.isAnimating = false;
     if (save) {
@@ -375,21 +369,11 @@ class BingoGame {
     if (!this.canUndo()) return null;
     const lastNumber = this.drawnNumbers.pop();
     this.remainingNumbers.push(lastNumber);
-    // Restaurar currentNumber al penúltimo sorteado o null
     this.currentNumber = this.drawnNumbers.length > 0
       ? this.drawnNumbers[this.drawnNumbers.length - 1]
       : null;
     this._save();
     return lastNumber;
-  }
-
-  getLetter(number) {
-    if (number >= 1 && number <= 15) return 'B';
-    if (number >= 16 && number <= 30) return 'I';
-    if (number >= 31 && number <= 45) return 'N';
-    if (number >= 46 && number <= 60) return 'G';
-    if (number >= 61 && number <= 75) return 'O';
-    return '?';
   }
 
   _save() {
@@ -409,7 +393,7 @@ class BingoGame {
     return this.remainingNumbers.length;
   }
 
-  getHistory(limit = 20) {
+  getHistory(limit = 24) {
     return this.drawnNumbers.slice(-limit);
   }
 }
@@ -422,11 +406,10 @@ class UIRenderer {
     this.game = game;
     this.els = {
       ball: document.getElementById('current-ball'),
-      ballLetter: document.getElementById('ball-letter'),
       ballNumber: document.getElementById('ball-number'),
-      displayLetter: document.getElementById('display-letter'),
       displayNumber: document.getElementById('display-number'),
       numberDisplay: document.querySelector('.number-display'),
+      drum: document.getElementById('drum'),
       historyGrid: document.getElementById('history-grid'),
       remaining: document.getElementById('balls-remaining'),
       btnDraw: document.getElementById('btn-draw'),
@@ -449,16 +432,11 @@ class UIRenderer {
   renderCurrentBall() {
     const n = this.game.currentNumber;
     if (n === null) {
-      this.els.ballLetter.textContent = 'B';
       this.els.ballNumber.textContent = '--';
-      this.els.displayLetter.textContent = 'B';
       this.els.displayNumber.textContent = '--';
       return;
     }
-    const letter = this.game.getLetter(n);
-    this.els.ballLetter.textContent = letter;
     this.els.ballNumber.textContent = n;
-    this.els.displayLetter.textContent = letter;
     this.els.displayNumber.textContent = n;
   }
 
@@ -466,10 +444,9 @@ class UIRenderer {
     const history = this.game.getHistory(24);
     this.els.historyGrid.innerHTML = '';
     history.forEach(num => {
-      const letter = this.game.getLetter(num);
       const div = document.createElement('div');
       div.className = 'history-ball';
-      div.innerHTML = `<span class="hb-letter">${letter}</span><span class="hb-number">${num}</span>`;
+      div.innerHTML = `<span class="hb-number">${num}</span>`;
       this.els.historyGrid.appendChild(div);
     });
   }
@@ -489,49 +466,53 @@ class UIRenderer {
     }
   }
 
+  showDrum() {
+    this.els.ball.classList.add('hidden');
+    this.els.drum.classList.remove('hidden');
+  }
+
+  hideDrum() {
+    this.els.drum.classList.add('hidden');
+    this.els.ball.classList.remove('hidden');
+  }
+
   async animateDraw(number, onComplete) {
-    const letter = this.game.getLetter(number);
     const finalNumber = number;
 
-    // 1. Animación de slot machine rápida
+    // 1. Mostrar bolillero
+    this.showDrum();
     this.els.numberDisplay.classList.add('animating');
     this.els.ball.classList.remove('animate-draw', 'animate-glow');
 
+    // 2. Slot machine rápida en el display mientras gira el drum
     let iterations = 0;
-    const maxIterations = 12;
+    const maxIterations = 18;
     const interval = setInterval(() => {
       iterations++;
-      const fake = Math.floor(Math.random() * 75) + 1;
-      const fakeLetter = this.game.getLetter(fake);
-      this.els.displayLetter.textContent = fakeLetter;
+      const fake = Math.floor(Math.random() * 90) + 1;
       this.els.displayNumber.textContent = fake;
-      this.els.ballLetter.textContent = fakeLetter;
-      this.els.ballNumber.textContent = fake;
 
       if (iterations >= maxIterations) {
         clearInterval(interval);
-        this._finalizeDraw(finalNumber, letter, onComplete);
+        // 3. Ocultar drum y mostrar bola real
+        this.hideDrum();
+        this._finalizeDraw(finalNumber, onComplete);
       }
-    }, 60);
+    }, 80);
   }
 
-  _finalizeDraw(number, letter, onComplete) {
+  _finalizeDraw(number, onComplete) {
     this.els.numberDisplay.classList.remove('animating');
 
-    // Actualizar con número real
-    this.els.ballLetter.textContent = letter;
     this.els.ballNumber.textContent = number;
-    this.els.displayLetter.textContent = letter;
     this.els.displayNumber.textContent = number;
 
-    // Animación de rebote
     this.els.ball.classList.add('animate-draw');
     setTimeout(() => {
       this.els.ball.classList.remove('animate-draw');
       this.els.ball.classList.add('animate-glow');
     }, 1200);
 
-    // Actualizar historial y contador
     this.renderHistory();
     this.renderCounter();
     this.renderButtonState();
@@ -574,8 +555,6 @@ class FullscreenHelper {
   }
 
   static tryAuto() {
-    // Los navegadores modernos requieren interacción de usuario
-    // Intentamos al primer click en cualquier lugar
     const handler = () => {
       this.toggle();
       document.removeEventListener('click', handler);
@@ -601,21 +580,14 @@ class App {
     this.ui.renderAll();
     this._bindEvents();
     this._applyTheme(this.game.settings.theme || 'theme-default');
-
-    // Intentar fullscreen automático al primer click
     FullscreenHelper.tryAuto();
-
-    console.log('Bingo TV iniciado. Bolas restantes:', this.game.getRemainingCount());
+    console.log('Bingo Tradicional iniciado. Bolas restantes:', this.game.getRemainingCount());
   }
 
   _bindEvents() {
-    // Sacar bola
     this.ui.els.btnDraw.addEventListener('click', () => this._handleDraw());
-
-    // Deshacer última bola
     this.ui.els.btnUndo.addEventListener('click', () => this._handleUndo());
 
-    // Nueva partida (modal)
     this.ui.els.btnNewGame.addEventListener('click', () => {
       this.audio.playClick();
       this.ui.showModal();
@@ -630,12 +602,10 @@ class App {
       this.ui.hideModal();
     });
 
-    // Doble click en header para fullscreen manual
     document.querySelector('.main-header').addEventListener('dblclick', () => {
       FullscreenHelper.toggle();
     });
 
-    // Selector de tema
     document.querySelectorAll('.theme-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         this.audio.playClick();
@@ -652,28 +622,20 @@ class App {
       return;
     }
 
-    // Reanudar audio context por políticas de autoplay
     this.audio._ensureContext();
-
-    // Suspense
     this.audio.playSuspense();
 
     const number = this.game.draw();
     if (number === null) return;
 
-    // Animación visual
     this.ui.renderButtonState();
     this.ui.animateDraw(number, () => {
-      // Sonido pop al revelar
       this.audio.playPop();
 
-      // Voz
       if (this.game.settings.voiceEnabled) {
-        const letter = this.game.getLetter(number);
-        this.voice.announce(number, letter);
+        this.voice.announce(number);
       }
 
-      // Mensaje de estado
       const remaining = this.game.getRemainingCount();
       if (remaining === 0) {
         this.ui.showStatus('¡Bingo completo!');
@@ -692,8 +654,7 @@ class App {
     const undoneNumber = this.game.undo();
     this.ui.renderAll();
     if (undoneNumber !== null) {
-      const letter = this.game.getLetter(undoneNumber);
-      this.ui.showStatus(`Anulado: ${letter} ${undoneNumber}`);
+      this.ui.showStatus(`Anulado: ${undoneNumber}`);
     }
   }
 
