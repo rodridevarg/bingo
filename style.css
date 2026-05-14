@@ -208,71 +208,80 @@ body {
   animation: slotShake 0.1s linear infinite;
 }
 
-/* ---- Historial ---- */
-.history-section {
+/* ---- Tablero Bingo ---- */
+.board-section {
   width: 100%;
-  max-width: 1400px;
+  max-width: 600px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5vh;
   flex: 0 1 auto;
   margin-bottom: 2vh;
 }
 
-.history-title {
-  font-size: 2.5vh;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  opacity: 0.8;
-}
-
-.history-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.2vh;
+.bingo-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
   width: 100%;
   padding: 1.5vh;
   background: var(--history-bg);
   border: 1px solid var(--history-border);
   border-radius: 16px;
   backdrop-filter: blur(10px);
-  min-height: 10vh;
-  max-height: 22vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
-.history-ball {
-  width: 7vh;
-  height: 7vh;
-  border-radius: 50%;
-  background: var(--ball-bg);
+.board-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset -3px -3px 8px rgba(0,0,0,0.2);
-  opacity: 0;
-  transform: translateY(20px) scale(0.8);
-  animation: historyEntry 0.4s ease forwards;
+  font-size: 2.2vh;
+  font-weight: 900;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.8vh 0;
+  text-shadow: 0 0 10px var(--primary);
 }
 
-.history-ball .hb-letter {
-  font-size: 1.6vh;
-  font-weight: 800;
-  color: var(--ball-text);
-  line-height: 1;
+.board-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 1.8vh;
+  font-weight: 700;
+  color: var(--text-color);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  opacity: 0.35;
+  transition: all 0.3s ease;
+  cursor: default;
 }
 
-.history-ball .hb-number {
-  font-size: 2.8vh;
-  font-weight: 800;
-  color: var(--ball-text);
-  line-height: 1;
+.board-cell.drawn {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  opacity: 1;
+  box-shadow: 0 0 12px var(--primary);
+  font-weight: 900;
+}
+
+.board-cell.current {
+  animation: currentPulse 1.5s ease-in-out infinite;
+  transform: scale(1.08);
+  z-index: 2;
+}
+
+@keyframes currentPulse {
+  0%, 100% {
+    box-shadow: 0 0 12px var(--primary), 0 0 24px var(--primary);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary);
+  }
 }
 
 /* ---- Controles ---- */
@@ -380,6 +389,30 @@ body {
   opacity: 0.4;
   cursor: not-allowed;
   filter: grayscale(0.6);
+}
+
+.btn-undo {
+  font-size: 2vh;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-color);
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 1.5vh 3vw;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-undo:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.btn-undo:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .btn-new-game {
@@ -580,6 +613,26 @@ body {
 
 @media (max-height: 600px) {
   #app { padding: 1vh 3vw; }
-  .history-section { margin-bottom: 1vh; }
+  .board-section { margin-bottom: 1vh; }
   .controls-section { padding-bottom: 1.5vh; }
+}
+
+/* Mobile compacto */
+@media (max-width: 480px) {
+  .bingo-board {
+    gap: 3px;
+    padding: 1vh;
+    border-radius: 10px;
+  }
+  .board-header {
+    font-size: 1.6vh;
+    padding: 0.4vh 0;
+  }
+  .board-cell {
+    font-size: 1.4vh;
+    border-radius: 5px;
+  }
+  .board-section {
+    max-width: 100%;
+  }
 }

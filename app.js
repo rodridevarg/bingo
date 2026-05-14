@@ -357,6 +357,22 @@ class BingoGame {
     return number;
   }
 
+  canUndo() {
+    return this.drawnNumbers.length > 0 && !this.isAnimating;
+  }
+
+  undo() {
+    if (!this.canUndo()) return null;
+    const lastNumber = this.drawnNumbers.pop();
+    this.remainingNumbers.push(lastNumber);
+    // Restaurar currentNumber al penúltimo sorteado o null
+    this.currentNumber = this.drawnNumbers.length > 0
+      ? this.drawnNumbers[this.drawnNumbers.length - 1]
+      : null;
+    this._save();
+    return lastNumber;
+  }
+
   getLetter(number) {
     if (number >= 1 && number <= 15) return 'B';
     if (number >= 16 && number <= 30) return 'I';
@@ -401,20 +417,43 @@ class UIRenderer {
       displayLetter: document.getElementById('display-letter'),
       displayNumber: document.getElementById('display-number'),
       numberDisplay: document.querySelector('.number-display'),
-      historyGrid: document.getElementById('history-grid'),
+      bingoBoard: document.getElementById('bingo-board'),
       remaining: document.getElementById('balls-remaining'),
       btnDraw: document.getElementById('btn-draw'),
+      btnUndo: document.getElementById('btn-undo'),
       btnNewGame: document.getElementById('btn-new-game'),
       modal: document.getElementById('modal-confirm'),
       btnCancel: document.getElementById('btn-cancel'),
       btnConfirm: document.getElementById('btn-confirm'),
       status: document.getElementById('status-message')
     };
+    this._buildBoard();
+  }
+
+  _buildBoard() {
+    const letters = ['B', 'I', 'N', 'G', 'O'];
+    const board = this.els.bingoBoard;
+    board.innerHTML = '';
+    // Headers
+    letters.forEach(letter => {
+      const header = document.createElement('div');
+      header.className = 'board-header';
+      header.textContent = letter;
+      board.appendChild(header);
+    });
+    // Celdas 1-75
+    for (let num = 1; num <= 75; num++) {
+      const cell = document.createElement('div');
+      cell.className = 'board-cell';
+      cell.dataset.number = num;
+      cell.textContent = num;
+      board.appendChild(cell);
+    }
   }
 
   renderAll() {
     this.renderCurrentBall();
-    this.renderHistory();
+    this.renderBoard();
     this.renderCounter();
     this.renderButtonState();
   }
@@ -435,15 +474,17 @@ class UIRenderer {
     this.els.displayNumber.textContent = n;
   }
 
-  renderHistory() {
-    const history = this.game.getHistory(24);
-    this.els.historyGrid.innerHTML = '';
-    history.forEach(num => {
-      const letter = this.game.getLetter(num);
-      const div = document.createElement('div');
-      div.className = 'history-ball';
-      div.innerHTML = `<span class="hb-letter">${letter}</span><span class="hb-number">${num}</span>`;
-      this.els.historyGrid.appendChild(div);
+  renderBoard() {
+    const cells = this.els.bingoBoard.querySelectorAll('.board-cell');
+    cells.forEach(cell => {
+      const num = parseInt(cell.dataset.number, 10);
+      cell.classList.remove('drawn', 'current');
+      if (this.game.drawnNumbers.includes(num)) {
+        cell.classList.add('drawn');
+        if (num === this.game.currentNumber) {
+          cell.classList.add('current');
+        }
+      }
     });
   }
 
@@ -454,6 +495,7 @@ class UIRenderer {
   renderButtonState() {
     const empty = this.game.getRemainingCount() === 0;
     this.els.btnDraw.disabled = empty || this.game.isAnimating;
+    this.els.btnUndo.disabled = !this.game.canUndo();
     if (empty) {
       this.els.btnDraw.textContent = 'Sin bolas';
     } else {
@@ -503,8 +545,8 @@ class UIRenderer {
       this.els.ball.classList.add('animate-glow');
     }, 1200);
 
-    // Actualizar historial y contador
-    this.renderHistory();
+    // Actualizar tablero y contador
+    this.renderBoard();
     this.renderCounter();
     this.renderButtonState();
 
@@ -584,6 +626,9 @@ class App {
     // Sacar bola
     this.ui.els.btnDraw.addEventListener('click', () => this._handleDraw());
 
+    // Deshacer última bola
+    this.ui.els.btnUndo.addEventListener('click', () => this._handleUndo());
+
     // Nueva partida (modal)
     this.ui.els.btnNewGame.addEventListener('click', () => {
       this.audio.playClick();
@@ -653,6 +698,17 @@ class App {
         this.confetti.start(3000);
       }
     });
+  }
+
+  _handleUndo() {
+    if (!this.game.canUndo()) return;
+    this.audio.playClick();
+    const undoneNumber = this.game.undo();
+    this.ui.renderAll();
+    if (undoneNumber !== null) {
+      const letter = this.game.getLetter(undoneNumber);
+      this.ui.showStatus(`Anulado: ${letter} ${undoneNumber}`);
+    }
   }
 
   _handleNewGame() {

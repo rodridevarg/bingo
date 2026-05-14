@@ -30,11 +30,10 @@
       </div>
     </header>
 
-    <!-- Main: historial de bolas sorteadas -->
-    <main class="history-section">
-      <h2 class="history-title">Últimas bolas</h2>
-      <div id="history-grid" class="history-grid">
-        <!-- Se llena dinámicamente -->
+    <!-- Main: tablero de bingo -->
+    <main class="board-section">
+      <div id="bingo-board" class="bingo-board">
+        <!-- Se genera dinámicamente -->
       </div>
     </main>
 
@@ -51,6 +50,7 @@
           <button class="theme-btn theme-gold" data-theme="theme-gold" type="button"></button>
           <button class="theme-btn theme-neon" data-theme="theme-neon" type="button"></button>
         </div>
+        <button id="btn-undo" class="btn-undo" type="button" disabled>↩️ Deshacer</button>
         <button id="btn-new-game" class="btn-new-game" type="button">Nueva Partida</button>
       </div>
     </footer>
