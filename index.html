@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bingo TV</title>
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body class="theme-default">
   <!-- Canvas para efecto confetti -->
@@ -17,37 +17,50 @@
       <img src="logo.png" alt="ShareDance" class="logo">
     </div>
 
-    <header class="main-header">
-      <div class="ball-container">
-        <!-- Bolillero animado -->
-        <div id="drum" class="drum hidden">
-          <div class="drum-inner">
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
-            <div class="drum-ball"></div>
+    <div id="main-view">
+      <header class="main-header">
+        <div class="ball-container">
+          <!-- Bolillero animado -->
+          <div id="drum" class="drum hidden">
+            <div class="drum-inner">
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+              <div class="drum-ball"></div>
+            </div>
+          </div>
+          <div id="current-ball" class="bingo-ball">
+            <span id="ball-number" class="ball-number">--</span>
           </div>
         </div>
-        <div id="current-ball" class="bingo-ball">
-          <span id="ball-number" class="ball-number">--</span>
+        <div class="number-display">
+          <span id="display-number" class="display-number">--</span>
         </div>
-      </div>
-      <div class="number-display">
-        <span id="display-number" class="display-number">--</span>
-      </div>
-    </header>
+      </header>
 
-    <!-- Main: historial de bolas sorteadas -->
-    <main class="history-section">
-      <h2 id="history-title" class="history-title hidden">Últimas bolas</h2>
-      <div id="history-grid" class="history-grid">
-        <!-- Se llena dinámicamente -->
+      <!-- Main: historial de bolas sorteadas -->
+      <main class="history-section">
+        <h2 id="history-title" class="history-title hidden">Últimas bolas</h2>
+        <div id="history-grid" class="history-grid">
+          <!-- Se llena dinámicamente -->
+        </div>
+      </main>
+    </div>
+
+    <!-- Vista del tablero completo (90 números) -->
+    <div id="board-view" class="hidden">
+      <div class="board-header">
+        <h2 class="board-title">Cartón Bingo</h2>
+        <button id="btn-close-board" class="btn-close-board" type="button">✕ Volver</button>
       </div>
-    </main>
+      <div id="board-grid" class="board-grid">
+        <!-- Se genera dinámicamente 1-90 -->
+      </div>
+    </div>
 
     <!-- Footer: controles -->
     <footer class="controls-section">
@@ -62,10 +75,20 @@
           <button class="theme-btn theme-gold" data-theme="theme-gold" type="button"></button>
           <button class="theme-btn theme-neon" data-theme="theme-neon" type="button"></button>
         </div>
+        <button id="btn-board" class="btn-board" type="button">📋 Tablero</button>
         <button id="btn-undo" class="btn-undo" type="button" disabled>↩️ Deshacer</button>
         <button id="btn-new-game" class="btn-new-game" type="button">Nueva Partida</button>
       </div>
     </footer>
+
+    <!-- Guía de atajos -->
+    <div id="shortcuts-hint" class="shortcuts-hint">
+      <span><kbd>Espacio</kbd> Sacar</span>
+      <span><kbd>T</kbd> Tablero</span>
+      <span><kbd>F</kbd> Pantalla completa</span>
+      <span><kbd>U</kbd> Deshacer</span>
+      <span><kbd>N</kbd> Nueva</span>
+    </div>
 
     <!-- Indicador de estado -->
     <div id="status-message" class="status-message"></div>
@@ -75,8 +98,8 @@
   <div id="modal-confirm" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
-      <h3>¿Nueva partida?</h3>
-      <p>Se borrará todo el progreso actual. Esta acción no se puede deshacer.</p>
+      <h3 id="modal-title">¿Nueva partida?</h3>
+      <p id="modal-text">Se borrará todo el progreso actual. Esta acción no se puede deshacer.</p>
       <div class="modal-actions">
         <button id="btn-cancel" class="btn-cancel" type="button">Cancelar</button>
         <button id="btn-confirm" class="btn-confirm" type="button">Confirmar</button>
@@ -84,6 +107,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

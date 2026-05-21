@@ -399,12 +399,29 @@ class BingoGame {
 }
 
 /* ============================================
-   6. UI RENDERER
+   6. HELPER: Color por década
+   ============================================ */
+function getDecadeClass(number) {
+  if (number >= 1 && number <= 10) return 'decade-1';
+  if (number >= 11 && number <= 20) return 'decade-2';
+  if (number >= 21 && number <= 30) return 'decade-3';
+  if (number >= 31 && number <= 40) return 'decade-4';
+  if (number >= 41 && number <= 50) return 'decade-5';
+  if (number >= 51 && number <= 60) return 'decade-6';
+  if (number >= 61 && number <= 70) return 'decade-7';
+  if (number >= 71 && number <= 80) return 'decade-8';
+  if (number >= 81 && number <= 90) return 'decade-9';
+  return '';
+}
+
+/* ============================================
+   7. UI RENDERER
    ============================================ */
 class UIRenderer {
   constructor(game) {
     this.game = game;
     this.els = {
+      mainView: document.getElementById('main-view'),
       ball: document.getElementById('current-ball'),
       ballNumber: document.getElementById('ball-number'),
       displayNumber: document.getElementById('display-number'),
@@ -416,11 +433,19 @@ class UIRenderer {
       btnDraw: document.getElementById('btn-draw'),
       btnUndo: document.getElementById('btn-undo'),
       btnNewGame: document.getElementById('btn-new-game'),
+      btnBoard: document.getElementById('btn-board'),
+      boardView: document.getElementById('board-view'),
+      boardGrid: document.getElementById('board-grid'),
+      btnCloseBoard: document.getElementById('btn-close-board'),
       modal: document.getElementById('modal-confirm'),
+      modalTitle: document.getElementById('modal-title'),
+      modalText: document.getElementById('modal-text'),
       btnCancel: document.getElementById('btn-cancel'),
       btnConfirm: document.getElementById('btn-confirm'),
       status: document.getElementById('status-message')
     };
+    this._modalConfirmCallback = null;
+    this._boardGenerated = false;
   }
 
   renderAll() {
@@ -428,10 +453,15 @@ class UIRenderer {
     this.renderHistory();
     this.renderCounter();
     this.renderButtonState();
+    this.renderBoard();
   }
 
   renderCurrentBall() {
     const n = this.game.currentNumber;
+    // Limpiar clases de década anteriores
+    for (let i = 1; i <= 9; i++) {
+      this.els.ball.classList.remove('decade-' + i);
+    }
     if (n === null) {
       this.els.ballNumber.textContent = '--';
       this.els.displayNumber.textContent = '--';
@@ -439,6 +469,7 @@ class UIRenderer {
     }
     this.els.ballNumber.textContent = n;
     this.els.displayNumber.textContent = n;
+    this.els.ball.classList.add(getDecadeClass(n));
   }
 
   renderHistory() {
@@ -451,7 +482,7 @@ class UIRenderer {
     this.els.historyGrid.innerHTML = '';
     history.forEach(num => {
       const div = document.createElement('div');
-      div.className = 'history-ball';
+      div.className = 'history-ball ' + getDecadeClass(num);
       div.innerHTML = `<span class="hb-number">${num}</span>`;
       this.els.historyGrid.appendChild(div);
     });
@@ -474,6 +505,46 @@ class UIRenderer {
     }
   }
 
+  renderBoard() {
+    if (!this.els.boardGrid) return;
+    if (!this._boardGenerated) {
+      this.els.boardGrid.innerHTML = '';
+      for (let i = 1; i <= 90; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'board-cell';
+        cell.dataset.number = i;
+        cell.textContent = i;
+        this.els.boardGrid.appendChild(cell);
+      }
+      this._boardGenerated = true;
+    }
+    const drawn = new Set(this.game.drawnNumbers);
+    const cells = this.els.boardGrid.querySelectorAll('.board-cell');
+    cells.forEach(cell => {
+      const num = parseInt(cell.dataset.number, 10);
+      const isDrawn = drawn.has(num);
+      cell.classList.toggle('drawn', isDrawn);
+      // Actualizar clase de década
+      for (let i = 1; i <= 9; i++) {
+        cell.classList.remove('decade-' + i);
+      }
+      if (isDrawn) {
+        cell.classList.add(getDecadeClass(num));
+      }
+    });
+  }
+
+  showBoard() {
+    this.els.mainView.classList.add('hidden');
+    this.els.boardView.classList.remove('hidden');
+    this.renderBoard();
+  }
+
+  hideBoard() {
+    this.els.boardView.classList.add('hidden');
+    this.els.mainView.classList.remove('hidden');
+  }
+
   showDrum() {
     this.els.ball.classList.add('hidden');
     this.els.drum.classList.remove('hidden');
@@ -491,6 +562,10 @@ class UIRenderer {
     this.showDrum();
     this.els.numberDisplay.classList.add('animating');
     this.els.ball.classList.remove('animate-draw', 'animate-glow');
+    // Limpiar clases de década
+    for (let i = 1; i <= 9; i++) {
+      this.els.ball.classList.remove('decade-' + i);
+    }
 
     // 2. Slot machine rápida en el display mientras gira el drum
     let iterations = 0;
@@ -516,6 +591,7 @@ class UIRenderer {
     this.els.displayNumber.textContent = number;
 
     this.els.ball.classList.add('animate-draw');
+    this.els.ball.classList.add(getDecadeClass(number));
     setTimeout(() => {
       this.els.ball.classList.remove('animate-draw');
       this.els.ball.classList.add('animate-glow');
@@ -524,6 +600,7 @@ class UIRenderer {
     this.renderHistory();
     this.renderCounter();
     this.renderButtonState();
+    this.renderBoard();
 
     if (onComplete) onComplete();
   }
@@ -536,17 +613,21 @@ class UIRenderer {
     }, duration);
   }
 
-  showModal() {
+  showConfirmModal(title, text, onConfirm) {
+    this._modalConfirmCallback = onConfirm;
+    this.els.modalTitle.textContent = title;
+    this.els.modalText.textContent = text;
     this.els.modal.classList.remove('hidden');
   }
 
-  hideModal() {
+  hideConfirmModal() {
+    this._modalConfirmCallback = null;
     this.els.modal.classList.add('hidden');
   }
 }
 
 /* ============================================
-   7. FULLSCREEN HELPER
+   8. FULLSCREEN HELPER
    ============================================ */
 class FullscreenHelper {
   static toggle() {
@@ -572,7 +653,7 @@ class FullscreenHelper {
 }
 
 /* ============================================
-   8. APP CONTROLLER
+   9. APP CONTROLLER
    ============================================ */
 class App {
   constructor() {
@@ -594,20 +675,34 @@ class App {
 
   _bindEvents() {
     this.ui.els.btnDraw.addEventListener('click', () => this._handleDraw());
-    this.ui.els.btnUndo.addEventListener('click', () => this._handleUndo());
+    this.ui.els.btnUndo.addEventListener('click', () => this._promptUndo());
 
     this.ui.els.btnNewGame.addEventListener('click', () => {
       this.audio.playClick();
-      this.ui.showModal();
+      this._promptNewGame();
     });
+
     this.ui.els.btnCancel.addEventListener('click', () => {
       this.audio.playClick();
-      this.ui.hideModal();
+      this.ui.hideConfirmModal();
     });
+
     this.ui.els.btnConfirm.addEventListener('click', () => {
       this.audio.playClick();
-      this._handleNewGame();
-      this.ui.hideModal();
+      if (this.ui._modalConfirmCallback) {
+        this.ui._modalConfirmCallback();
+      }
+      this.ui.hideConfirmModal();
+    });
+
+    // Tablero toggle
+    this.ui.els.btnBoard.addEventListener('click', () => {
+      this.audio.playClick();
+      this.ui.showBoard();
+    });
+    this.ui.els.btnCloseBoard.addEventListener('click', () => {
+      this.audio.playClick();
+      this.ui.hideBoard();
     });
 
     document.querySelector('.main-header').addEventListener('dblclick', () => {
@@ -621,6 +716,64 @@ class App {
         this._applyTheme(theme);
       });
     });
+
+    // Atajos de teclado
+    document.addEventListener('keydown', (e) => {
+      // Ignorar si hay un modal abierto
+      if (!this.ui.els.modal.classList.contains('hidden')) {
+        if (e.code === 'Escape') {
+          this.audio.playClick();
+          this.ui.hideConfirmModal();
+        }
+        return;
+      }
+
+      switch (e.code) {
+        case 'Space':
+          e.preventDefault();
+          this._handleDraw();
+          break;
+        case 'KeyT':
+          e.preventDefault();
+          this.audio.playClick();
+          if (this.ui.els.boardView.classList.contains('hidden')) {
+            this.ui.showBoard();
+          } else {
+            this.ui.hideBoard();
+          }
+          break;
+        case 'KeyF':
+          e.preventDefault();
+          FullscreenHelper.toggle();
+          break;
+        case 'KeyU':
+          e.preventDefault();
+          this._promptUndo();
+          break;
+        case 'KeyN':
+          e.preventDefault();
+          this._promptNewGame();
+          break;
+      }
+    });
+  }
+
+  _promptUndo() {
+    if (!this.game.canUndo()) return;
+    this.audio.playClick();
+    this.ui.showConfirmModal(
+      '¿Deshacer?',
+      'Se anulará la última bola sorteada. ¿Continuar?',
+      () => this._handleUndo()
+    );
+  }
+
+  _promptNewGame() {
+    this.ui.showConfirmModal(
+      '¿Nueva partida?',
+      'Se borrará todo el progreso actual. Esta acción no se puede deshacer.',
+      () => this._handleNewGame()
+    );
   }
 
   async _handleDraw() {
