@@ -117,6 +117,14 @@ class AudioEngine {
     return this.muted;
   }
 
+  unlock() {
+    // Desbloquear AudioContext en Chrome/Safari (requiere gesto de usuario)
+    this._ensureContext();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
   _ensureContext() {
     if (!this.ctx) {
       try {
@@ -132,7 +140,7 @@ class AudioEngine {
     }
   }
 
-  _osc(freq, type, duration, startTime, gainVal = 0.15) {
+  _osc(freq, type, duration, startTime, gainVal = 0.4) {
     if (!this.ctx || !this.enabled || this.muted) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
@@ -147,12 +155,13 @@ class AudioEngine {
   }
 
   playPop() {
+    if (this.muted) return;
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this._osc(600, 'sine', 0.15, t, 0.2);
-    this._osc(900, 'sine', 0.1, t + 0.02, 0.15);
-    this._noise(0.08, t, 0.08);
+    this._osc(600, 'sine', 0.15, t, 0.5);
+    this._osc(900, 'sine', 0.1, t + 0.02, 0.4);
+    this._noise(0.08, t, 0.2);
   }
 
   playSuspense() {
@@ -166,8 +175,8 @@ class AudioEngine {
     osc.frequency.setValueAtTime(300, t);
     osc.frequency.linearRampToValueAtTime(500, t + 0.3);
     osc.frequency.linearRampToValueAtTime(400, t + 0.5);
-    gain.gain.setValueAtTime(0.12, t);
-    gain.gain.linearRampToValueAtTime(0.12, t + 0.4);
+    gain.gain.setValueAtTime(0.35, t);
+    gain.gain.linearRampToValueAtTime(0.35, t + 0.4);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -182,8 +191,8 @@ class AudioEngine {
     const t = this.ctx.currentTime;
     const notes = [523, 659, 784, 1047];
     notes.forEach((freq, i) => {
-      this._osc(freq, 'sine', 0.4, t + i * 0.12, 0.18);
-      this._osc(freq * 2, 'triangle', 0.3, t + i * 0.12, 0.06);
+      this._osc(freq, 'sine', 0.4, t + i * 0.12, 0.5);
+      this._osc(freq * 2, 'triangle', 0.3, t + i * 0.12, 0.2);
     });
   }
 
@@ -192,14 +201,14 @@ class AudioEngine {
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
-    this._osc(800, 'square', 0.05, t, 0.08);
+    this._osc(800, 'square', 0.05, t, 0.3);
   }
 
   playRiverito() {
     if (this.muted) return;
     try {
       const audio = new Audio('riverito.mp3');
-      audio.volume = 0.8;
+      audio.volume = 0.9;
       audio.play();
     } catch (e) {
       console.warn('No se pudo reproducir riverito.mp3:', e);
@@ -308,7 +317,7 @@ class ConfettiEffect {
     this.particles = [];
     if (this._rafId) cancelAnimationFrame(this._rafId);
     const colors = ['#ff2e63', '#08d9d6', '#ffd700', '#00e5ff', '#76ff03', '#ff8c00', '#d500f9'];
-    for (let i = 0; i < 150; i++) {
+    for (let i = 0; i < 80; i++) {
       this.particles.push({
         x: Math.random() * this.canvas.width,
         y: Math.random() * this.canvas.height - this.canvas.height,
@@ -503,6 +512,7 @@ class UIRenderer {
     };
     this._modalConfirmCallback = null;
     this._boardGenerated = false;
+    this._boardCells = [];
   }
 
   renderAll() {
@@ -527,20 +537,29 @@ class UIRenderer {
     this.els.ball.classList.add(getDecadeClass(n));
   }
 
-  renderHistory() {
+  renderHistory(fullRebuild = true) {
     const history = this.game.getHistory(90);
     // Mostrar título "Últimas bolas" solo cuando quedan 10 o menos
     if (this.els.historyTitle) {
       const isNearEnd = this.game.getRemainingCount() <= 10;
       this.els.historyTitle.classList.toggle('hidden', !isNearEnd);
     }
-    this.els.historyGrid.innerHTML = '';
-    history.forEach(num => {
+    if (fullRebuild) {
+      this.els.historyGrid.innerHTML = '';
+      history.forEach(num => {
+        const div = document.createElement('div');
+        div.className = 'history-ball ' + getDecadeClass(num);
+        div.innerHTML = `<span class="hb-number">${num}</span>`;
+        this.els.historyGrid.appendChild(div);
+      });
+    } else if (history.length > 0) {
+      // Solo agregar la última bola
+      const lastNum = history[history.length - 1];
       const div = document.createElement('div');
-      div.className = 'history-ball ' + getDecadeClass(num);
-      div.innerHTML = `<span class="hb-number">${num}</span>`;
+      div.className = 'history-ball ' + getDecadeClass(lastNum);
+      div.innerHTML = `<span class="hb-number">${lastNum}</span>`;
       this.els.historyGrid.appendChild(div);
-    });
+    }
     // Auto-scroll al final para mostrar la bola más reciente
     this.els.historyGrid.scrollTop = this.els.historyGrid.scrollHeight;
   }
@@ -560,33 +579,41 @@ class UIRenderer {
     }
   }
 
-  renderBoard() {
+  renderBoard(numberToMark = null) {
     if (!this.els.boardGrid) return;
     if (!this._boardGenerated) {
       this.els.boardGrid.innerHTML = '';
+      this._boardCells = [];
       for (let i = 1; i <= 90; i++) {
         const cell = document.createElement('div');
         cell.className = 'board-cell';
         cell.dataset.number = i;
         cell.textContent = i;
         this.els.boardGrid.appendChild(cell);
+        this._boardCells[i] = cell;
       }
       this._boardGenerated = true;
     }
+    if (numberToMark && this._boardCells[numberToMark]) {
+      // Solo marcar la celda del número recién sorteado
+      const cell = this._boardCells[numberToMark];
+      cell.classList.add('drawn');
+      cell.classList.add(getDecadeClass(numberToMark));
+      return;
+    }
+    // Full rebuild (undo, load, init)
     const drawn = new Set(this.game.drawnNumbers);
-    const cells = this.els.boardGrid.querySelectorAll('.board-cell');
-    cells.forEach(cell => {
-      const num = parseInt(cell.dataset.number, 10);
-      const isDrawn = drawn.has(num);
+    for (let i = 1; i <= 90; i++) {
+      const cell = this._boardCells[i];
+      const isDrawn = drawn.has(i);
       cell.classList.toggle('drawn', isDrawn);
-      // Actualizar clase de década
-      for (let i = 1; i <= 9; i++) {
-        cell.classList.remove('decade-' + i);
+      for (let d = 1; d <= 9; d++) {
+        cell.classList.remove('decade-' + d);
       }
       if (isDrawn) {
-        cell.classList.add(getDecadeClass(num));
+        cell.classList.add(getDecadeClass(i));
       }
-    });
+    }
   }
 
   showBoard() {
@@ -649,10 +676,10 @@ class UIRenderer {
       this.els.ball.classList.add('animate-glow');
     }, 1200);
 
-    this.renderHistory();
+    this.renderHistory(false);
     this.renderCounter();
     this.renderButtonState();
-    this.renderBoard();
+    this.renderBoard(number);
 
     if (onComplete) onComplete();
   }
@@ -898,7 +925,7 @@ class App {
     this.game.isAnimating = true;
     this.ui.renderButtonState();
 
-    this.audio._ensureContext();
+    this.audio.unlock();
     this.audio.playSuspense();
 
     const number = this.game.draw();
