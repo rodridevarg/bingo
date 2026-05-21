@@ -791,6 +791,7 @@ body {
 .board-grid {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
+  grid-auto-rows: minmax(45px, 1fr);
   gap: 0.6vh;
   width: 100%;
   max-width: 1200px;
@@ -820,18 +821,17 @@ body {
 }
 
 .board-cell {
-  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
-  font-size: 2.4vh;
+  font-size: 2.2vh;
   font-weight: 800;
   color: rgba(255,255,255,0.25);
   transition: all 0.3s ease;
-  min-height: 0;
+  min-height: 40px;
 }
 
 .board-cell.drawn {
