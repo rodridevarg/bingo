@@ -443,9 +443,10 @@ class UIRenderer {
 
   renderHistory() {
     const history = this.game.getHistory(90);
-    // Mostrar u ocultar título según haya bolas
+    // Mostrar título "Últimas bolas" solo cuando quedan 10 o menos
     if (this.els.historyTitle) {
-      this.els.historyTitle.classList.toggle('hidden', history.length === 0);
+      const isNearEnd = this.game.getRemainingCount() <= 10;
+      this.els.historyTitle.classList.toggle('hidden', !isNearEnd);
     }
     this.els.historyGrid.innerHTML = '';
     history.forEach(num => {
