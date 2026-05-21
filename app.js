@@ -442,7 +442,7 @@ class UIRenderer {
   }
 
   renderHistory() {
-    const history = this.game.getHistory(10);
+    const history = this.game.getHistory(90);
     // Mostrar u ocultar título según haya bolas
     if (this.els.historyTitle) {
       this.els.historyTitle.classList.toggle('hidden', history.length === 0);
@@ -454,6 +454,8 @@ class UIRenderer {
       div.innerHTML = `<span class="hb-number">${num}</span>`;
       this.els.historyGrid.appendChild(div);
     });
+    // Auto-scroll al final para mostrar la bola más reciente
+    this.els.historyGrid.scrollTop = this.els.historyGrid.scrollHeight;
   }
 
   renderCounter() {

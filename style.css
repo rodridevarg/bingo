@@ -278,6 +278,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: flex-start;
   gap: 1.2vh;
   width: 100%;
   padding: 1.5vh;
@@ -285,10 +286,25 @@ body {
   border: 1px solid var(--history-border);
   border-radius: 16px;
   backdrop-filter: blur(10px);
-  min-height: 10vh;
-  max-height: 22vh;
+  min-height: 18vh;
+  max-height: 28vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.history-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.history-grid::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 3px;
 }
 
 .history-ball {
