@@ -468,9 +468,8 @@ class UIRenderer {
       mainView: document.getElementById('main-view'),
       ball: document.getElementById('current-ball'),
       ballNumber: document.getElementById('ball-number'),
-      displayNumber: document.getElementById('display-number'),
-      numberDisplay: document.querySelector('.number-display'),
       drum: document.getElementById('drum'),
+      drumNumber: document.getElementById('drum-number'),
       historyGrid: document.getElementById('history-grid'),
       historyTitle: document.getElementById('history-title'),
       remaining: document.getElementById('balls-remaining'),
@@ -511,11 +510,9 @@ class UIRenderer {
     }
     if (n === null) {
       this.els.ballNumber.textContent = '--';
-      this.els.displayNumber.textContent = '--';
       return;
     }
     this.els.ballNumber.textContent = n;
-    this.els.displayNumber.textContent = n;
     this.els.ball.classList.add(getDecadeClass(n));
   }
 
@@ -607,20 +604,19 @@ class UIRenderer {
 
     // 1. Mostrar bolillero
     this.showDrum();
-    this.els.numberDisplay.classList.add('animating');
     this.els.ball.classList.remove('animate-draw', 'animate-glow');
     // Limpiar clases de década
     for (let i = 1; i <= 9; i++) {
       this.els.ball.classList.remove('decade-' + i);
     }
 
-    // 2. Slot machine rápida en el display mientras gira el drum
+    // 2. Slot machine rápida dentro del drum mientras gira
     let iterations = 0;
     const maxIterations = 18;
     const interval = setInterval(() => {
       iterations++;
       const fake = Math.floor(Math.random() * 90) + 1;
-      this.els.displayNumber.textContent = fake;
+      this.els.drumNumber.textContent = fake;
 
       if (iterations >= maxIterations) {
         clearInterval(interval);
@@ -632,10 +628,7 @@ class UIRenderer {
   }
 
   _finalizeDraw(number, onComplete) {
-    this.els.numberDisplay.classList.remove('animating');
-
     this.els.ballNumber.textContent = number;
-    this.els.displayNumber.textContent = number;
 
     this.els.ball.classList.add('animate-draw');
     this.els.ball.classList.add(getDecadeClass(number));
