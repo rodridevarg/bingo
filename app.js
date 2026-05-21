@@ -108,7 +108,13 @@ class AudioEngine {
   constructor() {
     this.ctx = null;
     this.enabled = true;
+    this.muted = false;
     this._ensureContext();
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    return this.muted;
   }
 
   _ensureContext() {
@@ -127,7 +133,7 @@ class AudioEngine {
   }
 
   _osc(freq, type, duration, startTime, gainVal = 0.15) {
-    if (!this.ctx || !this.enabled) return;
+    if (!this.ctx || !this.enabled || this.muted) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = type;
@@ -150,6 +156,7 @@ class AudioEngine {
   }
 
   playSuspense() {
+    if (this.muted) return;
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
@@ -169,6 +176,7 @@ class AudioEngine {
   }
 
   playFanfare() {
+    if (this.muted) return;
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
@@ -180,6 +188,7 @@ class AudioEngine {
   }
 
   playClick() {
+    if (this.muted) return;
     this._ensureContext();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
@@ -187,6 +196,7 @@ class AudioEngine {
   }
 
   playRiverito() {
+    if (this.muted) return;
     try {
       const audio = new Audio('riverito.mp3');
       audio.volume = 0.8;
@@ -480,6 +490,7 @@ class UIRenderer {
       boardView: document.getElementById('board-view'),
       boardGrid: document.getElementById('board-grid'),
       btnCloseBoard: document.getElementById('btn-close-board'),
+      btnMute: document.getElementById('btn-mute'),
       btnSave: document.getElementById('btn-save'),
       btnLoad: document.getElementById('btn-load'),
       fileLoad: document.getElementById('file-load'),
@@ -710,6 +721,12 @@ class App {
     this.ui.renderAll();
     this._bindEvents();
     this._applyTheme(this.game.settings.theme || 'theme-default');
+    // Aplicar estado de mute guardado
+    if (this.game.settings.soundEnabled === false) {
+      this.audio.muted = true;
+      this.ui.els.btnMute.textContent = '🔇';
+      this.ui.els.btnMute.classList.add('muted');
+    }
     FullscreenHelper.tryAuto();
     console.log('Bingo Tradicional iniciado. Bolas restantes:', this.game.getRemainingCount());
   }
@@ -783,6 +800,16 @@ class App {
         const theme = e.target.dataset.theme;
         this._applyTheme(theme);
       });
+    });
+
+    // Mute toggle
+    this.ui.els.btnMute.addEventListener('click', () => {
+      const isMuted = this.audio.toggleMute();
+      this.game.settings.soundEnabled = !isMuted;
+      StorageManager.save(this.game._serialize());
+      this.ui.els.btnMute.textContent = isMuted ? '🔇' : '🔊';
+      this.ui.els.btnMute.classList.toggle('muted', isMuted);
+      this.ui.showStatus(isMuted ? 'Sonido silenciado' : 'Sonido activado', 1500);
     });
 
     // Atajos de teclado

@@ -399,6 +399,31 @@ body {
   background: linear-gradient(135deg, #00e5ff, #d500f9);
 }
 
+.btn-mute {
+  font-size: 1.8vh;
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-mute:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.5);
+  transform: scale(1.1);
+}
+
+.btn-mute.muted {
+  opacity: 0.5;
+}
+
 .counter-label {
   font-size: 2vh;
   font-weight: 600;
