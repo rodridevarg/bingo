@@ -283,6 +283,7 @@ class ConfettiEffect {
     this.ctx = this.canvas.getContext('2d');
     this.particles = [];
     this.active = false;
+    this._rafId = null;
     this._resize();
     window.addEventListener('resize', () => this._resize());
   }
@@ -295,6 +296,7 @@ class ConfettiEffect {
   start(duration = 4000) {
     this.active = true;
     this.particles = [];
+    if (this._rafId) cancelAnimationFrame(this._rafId);
     const colors = ['#ff2e63', '#08d9d6', '#ffd700', '#00e5ff', '#76ff03', '#ff8c00', '#d500f9'];
     for (let i = 0; i < 150; i++) {
       this.particles.push({
@@ -316,6 +318,7 @@ class ConfettiEffect {
   _animate() {
     if (!this.active && this.particles.length === 0) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this._rafId = null;
       return;
     }
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -340,7 +343,7 @@ class ConfettiEffect {
       this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
       this.ctx.restore();
     }
-    requestAnimationFrame(() => this._animate());
+    this._rafId = requestAnimationFrame(() => this._animate());
   }
 }
 
@@ -391,16 +394,13 @@ class BingoGame {
   }
 
   draw() {
-    if (this.isAnimating) return null;
     if (this.remainingNumbers.length === 0) return null;
 
-    this.isAnimating = true;
     const idx = Math.floor(Math.random() * this.remainingNumbers.length);
     const number = this.remainingNumbers[idx];
     this.remainingNumbers.splice(idx, 1);
     this.drawnNumbers.push(number);
     this.currentNumber = number;
-    this.isAnimating = false;
     this._save();
     return number;
   }
@@ -628,6 +628,7 @@ class UIRenderer {
   }
 
   _finalizeDraw(number, onComplete) {
+    this.els.drumNumber.textContent = '--';
     this.els.ballNumber.textContent = number;
 
     this.els.ball.classList.add('animate-draw');
@@ -760,19 +761,16 @@ class App {
       if (!file) return;
       try {
         const data = await StorageManager.importFromFile(file);
-        this.game.drawnNumbers = data.drawnNumbers || [];
-        this.game.remainingNumbers = data.remainingNumbers || [];
-        this.game.currentNumber = data.currentNumber !== undefined ? data.currentNumber : null;
-        this.game.settings = { ...this.game.settings, ...(data.settings || {}) };
-        this.game.isAnimating = false;
-        StorageManager.save(this.game._serialize());
-        this.ui.renderAll();
-        this._applyTheme(this.game.settings.theme || 'theme-default');
-        this.ui.showStatus('Partida cargada 📂', 2500);
+        this._pendingLoadData = data;
+        this.ui.showConfirmModal(
+          '¿Cargar partida?',
+          'Se reemplazará la partida actual. ¿Continuar?',
+          () => this._applyLoadedGame()
+        );
       } catch (err) {
         this.ui.showStatus('Archivo inválido ❌', 3000);
+        e.target.value = '';
       }
-      e.target.value = '';
     });
 
     document.querySelector('.main-header').addEventListener('dblclick', () => {
@@ -846,6 +844,23 @@ class App {
     );
   }
 
+  _applyLoadedGame() {
+    if (!this._pendingLoadData) return;
+    const data = this._pendingLoadData;
+    this._pendingLoadData = null;
+    this.game.drawnNumbers = data.drawnNumbers || [];
+    this.game.remainingNumbers = data.remainingNumbers || [];
+    this.game.currentNumber = data.currentNumber !== undefined ? data.currentNumber : null;
+    this.game.settings = { ...this.game.settings, ...(data.settings || {}) };
+    this.game.isAnimating = false;
+    StorageManager.save(this.game._serialize());
+    this.ui.hideBoard();
+    this.ui.renderAll();
+    this._applyTheme(this.game.settings.theme || 'theme-default');
+    this.ui.showStatus('Partida cargada 📂', 2500);
+    this.ui.els.fileLoad.value = '';
+  }
+
   async _handleDraw() {
     if (this.game.isAnimating) return;
     if (this.game.getRemainingCount() === 0) {
@@ -853,14 +868,22 @@ class App {
       return;
     }
 
+    this.game.isAnimating = true;
+    this.ui.renderButtonState();
+
     this.audio._ensureContext();
     this.audio.playSuspense();
 
     const number = this.game.draw();
-    if (number === null) return;
+    if (number === null) {
+      this.game.isAnimating = false;
+      this.ui.renderButtonState();
+      return;
+    }
 
-    this.ui.renderButtonState();
     this.ui.animateDraw(number, () => {
+      this.game.isAnimating = false;
+      this.ui.renderButtonState();
       this.audio.playPop();
 
       if (this.game.settings.voiceEnabled) {
