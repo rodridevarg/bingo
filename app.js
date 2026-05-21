@@ -55,6 +55,50 @@ class StorageManager {
     if (typeof data.currentNumber !== 'number' && data.currentNumber !== null) return false;
     return true;
   }
+
+  static exportToFile(state) {
+    try {
+      const payload = {
+        ...state,
+        version: this.VERSION,
+        timestamp: Date.now()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const date = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `bingo-partida-${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return true;
+    } catch (e) {
+      console.warn('No se pudo exportar:', e);
+      return false;
+    }
+  }
+
+  static async importFromFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!this.validate(data)) {
+            reject(new Error('Archivo inválido'));
+            return;
+          }
+          resolve(data);
+        } catch (err) {
+          reject(new Error('No se pudo leer el archivo'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Error al leer el archivo'));
+      reader.readAsText(file);
+    });
+  }
 }
 
 /* ============================================
@@ -437,6 +481,9 @@ class UIRenderer {
       boardView: document.getElementById('board-view'),
       boardGrid: document.getElementById('board-grid'),
       btnCloseBoard: document.getElementById('btn-close-board'),
+      btnSave: document.getElementById('btn-save'),
+      btnLoad: document.getElementById('btn-load'),
+      fileLoad: document.getElementById('file-load'),
       modal: document.getElementById('modal-confirm'),
       modalTitle: document.getElementById('modal-title'),
       modalText: document.getElementById('modal-text'),
@@ -703,6 +750,36 @@ class App {
     this.ui.els.btnCloseBoard.addEventListener('click', () => {
       this.audio.playClick();
       this.ui.hideBoard();
+    });
+
+    // Guardar / Cargar partida
+    this.ui.els.btnSave.addEventListener('click', () => {
+      this.audio.playClick();
+      const ok = StorageManager.exportToFile(this.game._serialize());
+      this.ui.showStatus(ok ? 'Partida guardada 💾' : 'Error al guardar', 2500);
+    });
+    this.ui.els.btnLoad.addEventListener('click', () => {
+      this.audio.playClick();
+      this.ui.els.fileLoad.click();
+    });
+    this.ui.els.fileLoad.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const data = await StorageManager.importFromFile(file);
+        this.game.drawnNumbers = data.drawnNumbers || [];
+        this.game.remainingNumbers = data.remainingNumbers || [];
+        this.game.currentNumber = data.currentNumber !== undefined ? data.currentNumber : null;
+        this.game.settings = { ...this.game.settings, ...(data.settings || {}) };
+        this.game.isAnimating = false;
+        StorageManager.save(this.game._serialize());
+        this.ui.renderAll();
+        this._applyTheme(this.game.settings.theme || 'theme-default');
+        this.ui.showStatus('Partida cargada 📂', 2500);
+      } catch (err) {
+        this.ui.showStatus('Archivo inválido ❌', 3000);
+      }
+      e.target.value = '';
     });
 
     document.querySelector('.main-header').addEventListener('dblclick', () => {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Bingo TV</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body class="theme-default">
   <!-- Canvas para efecto confetti -->
@@ -75,20 +75,26 @@
           <button class="theme-btn theme-gold" data-theme="theme-gold" type="button"></button>
           <button class="theme-btn theme-neon" data-theme="theme-neon" type="button"></button>
         </div>
-        <button id="btn-board" class="btn-board" type="button">📋 Tablero</button>
-        <button id="btn-undo" class="btn-undo" type="button" disabled>↩️ Deshacer</button>
-        <button id="btn-new-game" class="btn-new-game" type="button">Nueva Partida</button>
+        <div class="side-row">
+          <button id="btn-board" class="btn-board" type="button">📋 Tablero</button>
+          <button id="btn-undo" class="btn-undo" type="button" disabled>↩️ Deshacer</button>
+          <button id="btn-new-game" class="btn-new-game" type="button">Nueva Partida</button>
+        </div>
+        <div class="side-row">
+          <button id="btn-save" class="btn-save" type="button">💾 Guardar</button>
+          <button id="btn-load" class="btn-load" type="button">📂 Cargar</button>
+          <input type="file" id="file-load" class="hidden" accept=".json">
+        </div>
+        <!-- Guía de atajos -->
+        <div id="shortcuts-hint" class="shortcuts-hint">
+          <span><kbd>Espacio</kbd> Sacar</span>
+          <span><kbd>T</kbd> Tablero</span>
+          <span><kbd>F</kbd> Pantalla completa</span>
+          <span><kbd>U</kbd> Deshacer</span>
+          <span><kbd>N</kbd> Nueva</span>
+        </div>
       </div>
     </footer>
-
-    <!-- Guía de atajos -->
-    <div id="shortcuts-hint" class="shortcuts-hint">
-      <span><kbd>Espacio</kbd> Sacar</span>
-      <span><kbd>T</kbd> Tablero</span>
-      <span><kbd>F</kbd> Pantalla completa</span>
-      <span><kbd>U</kbd> Deshacer</span>
-      <span><kbd>N</kbd> Nueva</span>
-    </div>
 
     <!-- Indicador de estado -->
     <div id="status-message" class="status-message"></div>
@@ -107,6 +113,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=3"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

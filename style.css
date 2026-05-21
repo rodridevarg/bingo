@@ -343,10 +343,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3vw;
+  gap: 2vw;
   width: 100%;
   max-width: 1200px;
-  padding-bottom: 3vh;
+  padding-bottom: 2vh;
   flex: 0 0 auto;
 }
 
@@ -355,14 +355,22 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.5vh;
-  min-width: 120px;
+  min-width: 100px;
 }
 
 .side-controls {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5vh;
+  gap: 0.8vh;
+}
+
+.side-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6vw;
+  flex-wrap: wrap;
 }
 
 .theme-selector {
@@ -414,20 +422,91 @@ body {
 
 /* Botones */
 .btn-draw {
-  font-size: 3.5vh;
+  font-size: 3vh;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #fff;
   background: var(--btn-draw-bg);
   border: none;
-  border-radius: 16px;
-  padding: 2vh 5vw;
+  border-radius: 14px;
+  padding: 1.5vh 4vw;
   cursor: pointer;
   box-shadow: var(--btn-draw-shadow);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   position: relative;
   overflow: hidden;
+}
+
+.btn-draw:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  filter: brightness(1.15);
+}
+
+.btn-draw:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn-draw:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+}
+
+.btn-undo,
+.btn-new-game,
+.btn-board,
+.btn-save,
+.btn-load {
+  font-size: 1.6vh;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-color);
+  background: transparent;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 1vh 2vw;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-undo:hover:not(:disabled),
+.btn-new-game:hover,
+.btn-board:hover,
+.btn-save:hover,
+.btn-load:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.btn-undo:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ---- Guía de atajos ---- */
+.shortcuts-hint {
+  display: flex;
+  justify-content: center;
+  gap: 1.2vw;
+  width: 100%;
+  font-size: 1.2vh;
+  color: var(--text-color);
+  opacity: 0.35;
+  flex-wrap: wrap;
+}
+
+.shortcuts-hint kbd {
+  display: inline-block;
+  padding: 0.15vh 0.5vh;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 3px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1.1vh;
 }
 
 .btn-draw:hover:not(:disabled) {
@@ -702,8 +781,9 @@ body {
   align-items: center;
   width: 100%;
   flex: 1 1 auto;
-  gap: 2vh;
+  gap: 1.5vh;
   padding: 2vh 0;
+  overflow: hidden;
 }
 
 #board-view.hidden {
@@ -717,6 +797,7 @@ body {
   width: 100%;
   max-width: 1200px;
   padding: 0 2vw;
+  flex: 0 0 auto;
 }
 
 .board-title {
@@ -728,13 +809,13 @@ body {
 }
 
 .btn-close-board {
-  font-size: 2vh;
+  font-size: 1.8vh;
   font-weight: 700;
   color: var(--text-color);
   background: rgba(255,255,255,0.1);
   border: 2px solid rgba(255,255,255,0.3);
-  border-radius: 12px;
-  padding: 1vh 2vw;
+  border-radius: 10px;
+  padding: 0.8vh 1.5vw;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -748,14 +829,32 @@ body {
 .board-grid {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
-  gap: 1vh;
+  gap: 0.6vh;
   width: 100%;
   max-width: 1200px;
-  padding: 2vh;
+  padding: 1.5vh;
   background: var(--history-bg);
   border: 1px solid var(--history-border);
   border-radius: 16px;
   backdrop-filter: blur(10px);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+.board-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.board-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.board-grid::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 3px;
 }
 
 .board-cell {
@@ -763,13 +862,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.08);
-  font-size: 2.8vh;
+  font-size: 2.4vh;
   font-weight: 800;
   color: rgba(255,255,255,0.25);
   transition: all 0.3s ease;
+  min-height: 0;
 }
 
 .board-cell.drawn {
@@ -901,11 +1001,13 @@ body {
   }
   .btn-undo,
   .btn-new-game,
-  .btn-board {
-    font-size: 1.6vh;
-    padding: 1.2vh 3vw;
+  .btn-board,
+  .btn-save,
+  .btn-load {
+    font-size: 1.4vh;
+    padding: 1vh 2vw;
     flex: 1;
-    max-width: 140px;
+    max-width: 120px;
   }
   .board-grid {
     gap: 0.5vh;
