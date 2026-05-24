@@ -508,7 +508,8 @@ class UIRenderer {
       modalText: document.getElementById('modal-text'),
       btnCancel: document.getElementById('btn-cancel'),
       btnConfirm: document.getElementById('btn-confirm'),
-      status: document.getElementById('status-message')
+      status: document.getElementById('status-message'),
+      logoWrapper: document.querySelector('.logo-wrapper')
     };
     this._modalConfirmCallback = null;
     this._boardGenerated = false;
@@ -619,12 +620,14 @@ class UIRenderer {
   showBoard() {
     this.els.mainView.classList.add('hidden');
     this.els.boardView.classList.remove('hidden');
+    if (this.els.logoWrapper) this.els.logoWrapper.classList.add('hidden');
     this.renderBoard();
   }
 
   hideBoard() {
     this.els.boardView.classList.add('hidden');
     this.els.mainView.classList.remove('hidden');
+    if (this.els.logoWrapper) this.els.logoWrapper.classList.remove('hidden');
   }
 
   showDrum() {
