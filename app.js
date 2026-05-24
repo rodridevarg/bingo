@@ -56,6 +56,46 @@ class StorageManager {
     return true;
   }
 
+  // Saneamiento suave de archivos importados: normaliza números, elimina duplicados
+  // y reconstruye `remainingNumbers` a partir de `drawnNumbers` para asegurar
+  // consistencia (1..90, sin solapamientos).
+  static _sanitizeImported(raw) {
+    const out = {};
+    // extraer arrays si existen
+    const drawnRaw = Array.isArray(raw.drawnNumbers) ? raw.drawnNumbers : [];
+
+    // normalizar y filtrar drawnNumbers (enteros 1..90)
+    const seen = new Set();
+    const drawn = [];
+    for (const v of drawnRaw) {
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > 90) continue;
+      if (seen.has(n)) continue;
+      seen.add(n);
+      drawn.push(n);
+    }
+
+    // reconstruir remaining como los números 1..90 que no están en drawn
+    const all = Array.from({ length: 90 }, (_, i) => i + 1);
+    const remaining = all.filter(n => !seen.has(n));
+
+    // currentNumber: si el valor original es válido y está en drawn, mantenerlo;
+    // si no, usar la última bolilla sorteada (si existe) o null.
+    let currentNumber = null;
+    if (typeof raw.currentNumber === 'number' && Number.isInteger(raw.currentNumber) && raw.currentNumber >= 1 && raw.currentNumber <= 90 && seen.has(raw.currentNumber)) {
+      currentNumber = raw.currentNumber;
+    } else if (drawn.length > 0) {
+      currentNumber = drawn[drawn.length - 1];
+    }
+
+    out.drawnNumbers = drawn;
+    out.remainingNumbers = remaining;
+    out.currentNumber = currentNumber;
+    out.settings = typeof raw.settings === 'object' && raw.settings !== null ? raw.settings : {};
+    out._sanitized = true;
+    return out;
+  }
+
   static exportToFile(state) {
     try {
       const payload = {
@@ -85,12 +125,26 @@ class StorageManager {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const data = JSON.parse(e.target.result);
-          if (!this.validate(data)) {
-            reject(new Error('Archivo inválido'));
+          const raw = JSON.parse(e.target.result);
+          // Si es válido según la validación actual, devolverlo tal cual
+          if (this.validate(raw)) {
+            resolve(raw);
             return;
           }
-          resolve(data);
+
+          // Intentar saneamiento suave y devolver la versión corregida
+          try {
+            const sanitized = this._sanitizeImported(raw);
+            // validar la estructura mínima antes de aceptar
+            if (this.validate(sanitized)) {
+              resolve(sanitized);
+              return;
+            }
+          } catch (err) {
+            // si el saneamiento falla, fallamos abajo
+          }
+
+          reject(new Error('Archivo inválido'));
         } catch (err) {
           reject(new Error('No se pudo leer el archivo'));
         }
@@ -914,7 +968,11 @@ class App {
     this.ui.hideBoard();
     this.ui.renderAll();
     this._applyTheme(this.game.settings.theme || 'theme-default');
-    this.ui.showStatus('Partida cargada 📂', 2500);
+    if (data && data._sanitized) {
+      this.ui.showStatus('Partida cargada 📂 — valores inválidos corregidos', 4500);
+    } else {
+      this.ui.showStatus('Partida cargada 📂', 2500);
+    }
     this.ui.els.fileLoad.value = '';
   }
 
